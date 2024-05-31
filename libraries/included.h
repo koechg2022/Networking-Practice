@@ -11,35 +11,29 @@
     #endif
 
     // find the flags for each of these libraries
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #include <iphlpapi.h>
+    #if not defined(_WINSOCK2API_)
+        #include <winsock2.h>
+    #endif
+
+    #if not defined(_WS2TCPIP_H_)
+        #include <ws2tcpip.h>
+    #endif
+
+    #if not defined(__IPHLPAPI_H__)
+        #include <iphlpapi.h>
+    #endif
 
     #pragma comment(lib, "ws2_32.lib")
     #pragma comment(lib, "iphlpapi.lib")
 
 
-    #include <windows.h>
+    #if not defined(_WINDOWS_)
+        #include <windows.h>
+    #endif
 
-
-    #define valid_socket(sock_no) (sock_no != INVALID_SOCKET)
-    #define close_socket(sock_no) (closesocket(sock_no))
-    #define get_socket_errno() (WSAGetLastError())
-
-    // TODO : COMPLETE ME
-    // Needs to be complete.
-    #define get_adapter_name(this_adapter) ()
-    #define get_address(an_adapter) ()
-    #define get_next_address(this_address) ()
-    #define get_ip_version(this_address) ()
-    #define fill_getnameinfo(this_address, address_buffer, buffer_size, flag) ()
-    #define free_adapters(the_adapters)(free(the_adapters))
-
-
-    typedef SOCKET sock;
-    typedef PIP_ADAPTER_UNICAST_ADDRESS address;
-    typedef PIP_ADAPTER_ADDRESSES adapter;
-    typedef PIP_ADAPTER_ADDRESSES filling_adapter;
+    #if not defined(_APISETSTRING_)
+        #include <stringapiset.h>
+    #endif
 
 
 
@@ -105,6 +99,7 @@
 
 
     #define get_adapter_name(this_adapter) (std::string(this_adapter->ifa_name))
+    #define get_next_adapter(this_adapter) (this_adapter->ifa_next)
     #define get_address(an_adapter) (an_adapter)
     #define get_next_address(this_address) (NULL)
     #define get_ip_version(this_address) (this_address->ifa_addr->sa_family)
@@ -245,11 +240,12 @@ namespace useful_functions {
     }
 
     #if defined(crap_os)
-        std::string ws2string(const std::string& the_string) {
-            int len, string_len = (int) the_string.length() + 1;
-            len = WideCharToMultiByte(CP_ACP, 0, the_string.c_str(), string_len, 0, 0, 0, 0);
-            std::string the_answer(string_len, '\0');
-            WideCharToMultiByte(CP_ACP, 0, the_string.c_str(), string_len, &the_answer[0], len, 0, 0);
+        inline std::string ws2string(const std::wstring& the_string) {
+            int len;
+            int string_length = (int) the_string.length() + 1;
+            len = WideCharToMultiByte(CP_ACP, 0, the_string.c_str(), string_length, 0, 0, 0, 0);
+            std::string the_answer(string_length, '\0');
+            WideCharToMultiByte(CP_ACP, 0, the_string.c_str(), string_length, &the_answer[0], len, 0, 0);
             return the_answer;
         }
     #endif
@@ -281,3 +277,27 @@ namespace useful_functions {
 
 
 }
+
+
+
+#if defined(crap_os)
+    #define valid_socket(sock_no) (sock_no != INVALID_SOCKET)
+    #define close_socket(sock_no) (closesocket(sock_no))
+    #define get_socket_errno() (WSAGetLastError())
+
+    // TODO : COMPLETE ME
+    // Needs to be complete.
+    #define get_adapter_name(this_adapter) (useful_functions::ws2string(this_adapter->FriendlyName))
+    #define get_next_adapter(this_adapter) (this_adapter->Next)
+    #define get_address(this_adapter) (this_adapter->FirstUnicastAddress)
+    #define get_next_address(this_address) (this_address->Next)
+    #define get_ip_version(this_address) (this_address->Address.lpSockaddr->sa_family)
+    #define fill_getnameinfo(this_address, address_buffer, buffer_size, flag) (getnameinfo(this_address->Address.lpSockaddr, this_address->Address.iSockaddrLength, address_buffer, buffer_size, 0, 0, flag))
+    #define free_adapters(the_adapters)(free(the_adapters))
+
+
+    typedef SOCKET sock;
+    typedef PIP_ADAPTER_UNICAST_ADDRESS address;
+    typedef PIP_ADAPTER_ADDRESSES adapter;
+    typedef PIP_ADAPTER_ADDRESSES filling_adapter;
+#endif

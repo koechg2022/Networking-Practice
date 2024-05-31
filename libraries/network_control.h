@@ -1,7 +1,5 @@
 
 
-#include <ifaddrs.h>
-#include <utility>
 #if not defined(_INCLUDED_LIBS)
     #include "included.h"
 #endif
@@ -132,7 +130,7 @@ namespace manage_network {
                     
                     the_adapters = (filling_adapter) malloc(size);
                     if (!the_adapters) {
-                        std::fprintf(stderr, "This stupid windows machine won't share %ld bytes.\n");
+                        std::fprintf(stderr, "This stupid windows machine won't share %ld bytes.\n", size);
                         return -1;
                     }
 
@@ -151,8 +149,7 @@ namespace manage_network {
                     else {
                         std::fprintf(stderr, "Error while retrieving adapter information:\t(Error number %d):\n", get_socket_errno());
                         std::free(the_adapters);
-                        the_answer = -1;
-                        break;
+                        return -1;
                     }
                 } while (!the_adapters);
             #endif
@@ -173,7 +170,7 @@ namespace manage_network {
         clean_up();
     }
 
-    const std::map<std::string, std::map<std::string, std::vector<std::string> > > get_local_machine_adapters() {
+    inline const std::map<std::string, std::map<std::string, std::vector<std::string> > > get_local_machine_adapters() {
         std::map<std::string, std::map<std::string, std::vector<std::string> > > the_answer;
         bool was_initialized = false;
         if (!is_initialized()) {
@@ -186,7 +183,7 @@ namespace manage_network {
 
         adapter the_adapters;
 
-        if (get_adapter_information(&the_adapters) == -1) {
+        if (get_adapter_information(the_adapters) == -1) {
             std::fprintf(stderr, "Failed to retrieve adapter information for this machine. Error %d\n", get_socket_errno());
             if (will_throw) {
                 if (!was_initialized) {
@@ -205,7 +202,7 @@ namespace manage_network {
         char address_string[basic_buffer_size];
         std::string adapter_name, ip_version, ip_address;
 
-        for (adapter this_adapter = the_adapters; this_adapter; this_adapter = this_adapter->ifa_next) {
+        for (adapter this_adapter = the_adapters; this_adapter; this_adapter = get_next_adapter(this_adapter)) {
             adapter_name = get_adapter_name(this_adapter);
             for (address this_address = get_address(this_adapter); this_address; this_address = get_next_address(this_address)) {
                 if (get_ip_version(this_address) == AF_INET || get_ip_version(this_address) == AF_INET6) {
