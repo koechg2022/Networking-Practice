@@ -71,6 +71,7 @@ void list_adapters() {
             }
             std::printf("\n");
         }
+        std::printf("\n");
     }
 }
 
