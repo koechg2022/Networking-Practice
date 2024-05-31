@@ -132,7 +132,7 @@ namespace manage_network {
                     
                     the_adapters = (filling_adapter) malloc(size);
                     if (!the_adapters) {
-                        std::fprintf(stderr, "This stupid windows machine won't share %ld bytes.\n");
+                        std::fprintf(stderr, "This stupid windows machine won't share %ld bytes.\n", size);
                         return -1;
                     }
 
@@ -205,7 +205,7 @@ namespace manage_network {
         char address_string[basic_buffer_size];
         std::string adapter_name, ip_version, ip_address;
 
-        for (adapter this_adapter = the_adapters; this_adapter; this_adapter = this_adapter->ifa_next) {
+        for (adapter this_adapter = the_adapters; this_adapter; this_adapter = get_next_adapter(this_adapter)) {
             adapter_name = get_adapter_name(this_adapter);
             for (address this_address = get_address(this_adapter); this_address; this_address = get_next_address(this_address)) {
                 if (get_ip_version(this_address) == AF_INET || get_ip_version(this_address) == AF_INET6) {
