@@ -58,7 +58,7 @@ void print_line_across_window(char c) {
 void list_adapters() {
     unsigned long index;
     std::map<std::string, std::map<std::string, std::vector<std::string> > > system_adapters = manage_network::get_local_machine_adapters();
-    // std::cout << "system_adapters have a size of " << system_adapters.size() << std::endl;
+    std::cout << "system_adapters have a size of " << system_adapters.size() << std::endl;
     for (std::map<std::string, std::map<std::string, std::vector<std::string> > >::const_iterator adapt_name = system_adapters.begin(); adapt_name != system_adapters.end(); adapt_name++) {
         std::cout << "Adapter \"" << adapt_name->first << "\":" << std::endl;
         for (std::map<std::string, std::vector<std::string> >::const_iterator ip_addresses = adapt_name->second.begin(); ip_addresses != adapt_name->second.end(); ip_addresses++) {
