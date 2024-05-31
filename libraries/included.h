@@ -253,7 +253,7 @@ namespace useful_functions {
 
             for (wchar_t wc : wstr) {
                 if (wc <= 0x7f) {
-                    result.push_back(static_cast<char>(wc));
+                    the_answer.push_back(static_cast<char>(wc));
                 }
                 else if (wc <= 0x7ff) {
                     the_answer.push_back(0xc0 | (wc >> 6));
