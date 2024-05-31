@@ -67,8 +67,9 @@ void list_adapters() {
         for (std::map<std::string, std::vector<std::string> >::const_iterator ip_addresses = adapt_name->second.begin(); ip_addresses != adapt_name->second.end(); ip_addresses++) {
             std::cout << "\t" << ip_addresses->first << "\tAddresses: ";
             for (index = 0; index < ip_addresses->second.size(); index = index + 1) {
-                std::cout << ip_addresses->second[index] << ((index + 1 == ip_addresses->second.size()) ? "\n" : ", ");
+                std::cout << ip_addresses->second[index] << ((index + 1 == ip_addresses->second.size()) ? "" : ", ");
             }
+            std::printf("\n");
         }
     }
 }
