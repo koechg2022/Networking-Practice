@@ -1,7 +1,5 @@
 
 
-#include <ifaddrs.h>
-#include <utility>
 #if not defined(_INCLUDED_LIBS)
     #include "included.h"
 #endif
