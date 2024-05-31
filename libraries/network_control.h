@@ -159,7 +159,7 @@ namespace manage_network {
 
     }
 
-    const std::map<std::string, std::map<std::string, std::vector<std::string> > > get_local_machine_adapters();
+    // const std::map<std::string, std::map<std::string, std::vector<std::string> > > get_local_machine_adapters();
 
     inline void initialize_network_for_crap_os() {
         initialize_network();
