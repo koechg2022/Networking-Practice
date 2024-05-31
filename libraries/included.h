@@ -247,12 +247,32 @@ namespace useful_functions {
     }
 
     #if defined(crap_os)
-        std::string ws2string(const std::string& the_string) {
-            int len, string_len = (int) the_string.length() + 1;
-            len = WideCharToMultiByte(CP_ACP, 0, the_string.c_str(), string_len, 0, 0, 0, 0);
-            std::string the_answer(string_len, '\0');
-            WideCharToMultiByte(CP_ACP, 0, the_string.c_str(), string_len, &the_answer[0], len, 0, 0);
-            return the_answer;
+        std::string ws2string(const std::wstring& wstr) {
+            std::string the_answer;
+            the_answer.reserve(wstr.size());
+
+            for (wchar_t wc : wstr) {
+                if (wc <= 0x7f) {
+                    result.push_back(static_cast<char>(wc));
+                }
+                else if (wc <= 0x7ff) {
+                    the_answer.push_back(0xc0 | (wc >> 6));
+                    the_answer.push_back(0x80 | (wc & 0x3f));
+                }
+                else if (wc <= 0xffff) {
+                    the_answer.push_back(0xe0 | (wc >> 12));
+                    the_answer.push_back(0x80 | ((wc >> 6) & 0x3f));
+                    the_answer.push_back(0x80 | (wc & 0x3f));
+                }
+                else if (wc <= 0x10ffff) {
+                    the_answer.push_back(0xf0 | (wc >> 18));
+                    the_answer.push_back(0x80 | ((wc >> 12) & 0x3f));
+                    the_answer.push_back(0x80 | ((wc >> 6) & 0x3f));
+                    the_answer.push_back(0x80 | (wc & 0x3f));
+                }
+            }
+
+            return result;
         }
     #endif
 
