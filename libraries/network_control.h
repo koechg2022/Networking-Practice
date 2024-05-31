@@ -128,7 +128,7 @@ namespace manage_network {
                 DWORD size = 20000;
                 do {
                     
-                    the_adapters = (filling_adapter) malloc(size);
+                    the_adapters = (PIP_ADAPTER_ADDRESSES) malloc(size);
                     if (!the_adapters) {
                         std::fprintf(stderr, "This stupid windows machine won't share %ld bytes.\n", size);
                         return -1;
@@ -139,6 +139,7 @@ namespace manage_network {
                     if (adapt_resp == ERROR_BUFFER_OVERFLOW) {
                         std::fprintf(stderr, "Gonna try again. This stupid windows adapter interface wants %ld bytes. Let's see if we can accomopdate it.\n", size);
                         std::free(the_adapters);
+                        the_adapters = NULL;
                     }
 
                     else if (adapt_resp == ERROR_SUCCESS) {
@@ -150,6 +151,7 @@ namespace manage_network {
                         std::fprintf(stderr, "Error while retrieving adapter information:\t(Error number %d):\n", get_socket_errno());
                         std::free(the_adapters);
                         the_answer = -1;
+                        the_adapters = NULL;
                         break;
                     }
                 } while (!the_adapters);
