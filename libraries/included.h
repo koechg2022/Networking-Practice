@@ -40,7 +40,7 @@
     typedef SOCKET sock;
     typedef PIP_ADAPTER_UNICAST_ADDRESS address;
     typedef PIP_ADAPTER_ADDRESSES adapter;
-    typedef PIP_ADAPTER_ADDRESSES filling_adapter;
+    typedef PIP_ADAPTER_ADDRESSES* filling_adapter;
 
 
 
@@ -272,7 +272,7 @@ namespace useful_functions {
                 }
             }
 
-            return result;
+            return the_answer;
         }
     #endif
 
