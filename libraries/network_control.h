@@ -184,7 +184,7 @@ namespace manage_network {
 
         adapter the_adapters;
 
-        if (get_adapter_information(&the_adapters) == -1) {
+        if (get_adapter_information(pass_adapters_to_filling_info(the_adapters)) == -1) {
             std::fprintf(stderr, "Failed to retrieve adapter information for this machine. Error %d\n", get_socket_errno());
             if (will_throw) {
                 if (!was_initialized) {

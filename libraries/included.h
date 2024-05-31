@@ -35,6 +35,7 @@
     #define get_ip_version(this_address) (this_address->Address.lpSockaddr->sa_family)
     #define fill_getnameinfo(this_address, address_buffer, buffer_size, flag) (getnameinfo(this_address->Address.lpSockaddr, this_address->Address.iSockaddrLength, address_buffer, buffer_size, 0, 0, flag))
     #define free_adapters(the_adapters)(free(the_adapters))
+    #define pass_adapters_to_filling_info(this_adapter) (this_adapter)
 
 
     typedef SOCKET sock;
@@ -112,6 +113,7 @@
     #define get_ip_version(this_address) (this_address->ifa_addr->sa_family)
     #define fill_getnameinfo(this_address, address_buffer, buffer_size, flag) (getnameinfo(this_address->ifa_addr, (this_address->ifa_addr->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6), address_buffer, buffer_size, 0, 0, flag))
     #define free_adapters(the_adapters)(freeifaddrs(the_adapters))
+    #define pass_adapters_to_filling_info(this_adapter) (&this_adapter)
 
 
     typedef int sock;
