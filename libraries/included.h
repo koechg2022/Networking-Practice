@@ -29,7 +29,7 @@
     // TODO : COMPLETE ME
     // Needs to be complete.
     #define get_adapter_name(this_adapter) (useful_functions::ws2string(this_adapter->FriendlyName))
-    #define get_next_adapter(this_adapter->Next)
+    #define get_next_adapter(this_adapter) (this_adapter->Next)
     #define get_address(this_adapter) (this_adapter->FirstUnicastAddress)
     #define get_next_address(this_address) (this_address->this_address->Next)
     #define get_ip_version(this_address) (this_address->Address.lpSockaddr->sa_family)
