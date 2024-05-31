@@ -31,7 +31,7 @@
     #define get_adapter_name(this_adapter) (useful_functions::ws2string(this_adapter->FriendlyName))
     #define get_next_adapter(this_adapter) (this_adapter->Next)
     #define get_address(this_adapter) (this_adapter->FirstUnicastAddress)
-    #define get_next_address(this_address) (this_address->this_address->Next)
+    #define get_next_address(this_address) (this_address->Next)
     #define get_ip_version(this_address) (this_address->Address.lpSockaddr->sa_family)
     #define fill_getnameinfo(this_address, address_buffer, buffer_size, flag) (getnameinfo(this_address->Address.lpSockaddr, this_address->Address.iSockaddrLength, address_buffer, buffer_size, 0, 0, flag))
     #define free_adapters(the_adapters)(free(the_adapters))
