@@ -152,8 +152,8 @@ namespace manage_network {
         // Get the adapter information on each system
         adapter_type the_adapters;
         #if defined(unix_os)
-            adapter_type the_adapters;
-            if (getifaddrs(&adapters)) {
+            // adapter_type the_adapters;
+            if (getifaddrs(&the_adapters)) {
                 if (!was_initialized) {
                     uninitialize_for_crap_os();
                 }
@@ -211,39 +211,39 @@ namespace manage_network {
 
         #endif
 
-            adapter_type this_adapter;
-            address_type this_address;
-            for (this_adapter = the_adapters; this_adapter; this_adapter = get_next_adapter(this_adapter)) {
-                for (this_address = get_address(this_adapter); this_address; this_address = get_next_address(this_address)) {
-                    if (get_address_family(this_address) == AF_INET || get_address_family(this_address) == AF_INET6) {
-                        adapt_name = get_adapter_name(this_adapter);
-                        ip_ver = (get_address_family(this_address) == AF_INET) ? ip4_const : ip6_const;
-                        memset(addr_buff, 0, basic_buffer_size);
-                        get_name_info(this_address, addr_buff, basic_buffer_size);
-                        ip_addr = std::string(addr_buff);
+        adapter_type this_adapter;
+        address_type this_address;
+        for (this_adapter = the_adapters; this_adapter; this_adapter = get_next_adapter(this_adapter)) {
+            for (this_address = get_address(this_adapter); this_address; this_address = get_next_address(this_address)) {
+                if (get_address_family(this_address) == AF_INET || get_address_family(this_address) == AF_INET6) {
+                    adapt_name = get_adapter_name(this_adapter);
+                    ip_ver = (get_address_family(this_address) == AF_INET) ? ip4_const : ip6_const;
+                    memset(addr_buff, 0, basic_buffer_size);
+                    get_name_info(this_address, addr_buff, basic_buffer_size);
+                    ip_addr = std::string(addr_buff);
 
-                        if (the_answer.find(adapt_name) == the_answer.end()) {
-                            std::vector<std::string> new_list;
-                            new_list.push_back(ip_addr);
-                            std::map<std::string, std::vector<std::string> > new_map;
-                            new_map.insert(std::make_pair(ip_ver, new_list));
-                            the_answer.insert(std::make_pair(adapt_name, new_map));
-                            continue;
-                        }
-
-                        if (the_answer[adapt_name].find(ip_ver) == the_answer[adapt_name].end()) {
-                            std::vector<std::string> new_list;
-                            new_list.push_back(ip_addr);
-                            the_answer[adapt_name].insert(std::make_pair(ip_ver, new_list));
-                            continue;
-                        }
-
-                        the_answer[adapt_name][ip_ver].push_back(ip_addr);
+                    if (the_answer.find(adapt_name) == the_answer.end()) {
+                        std::vector<std::string> new_list;
+                        new_list.push_back(ip_addr);
+                        std::map<std::string, std::vector<std::string> > new_map;
+                        new_map.insert(std::make_pair(ip_ver, new_list));
+                        the_answer.insert(std::make_pair(adapt_name, new_map));
+                        continue;
                     }
-                    break;
+
+                    if (the_answer[adapt_name].find(ip_ver) == the_answer[adapt_name].end()) {
+                        std::vector<std::string> new_list;
+                        new_list.push_back(ip_addr);
+                        the_answer[adapt_name].insert(std::make_pair(ip_ver, new_list));
+                        continue;
+                    }
+
+                    the_answer[adapt_name][ip_ver].push_back(ip_addr);
                 }
+                break;
             }
-            free_adapters(the_adapters);
+        }
+        free_adapters(the_adapters);
 
         if (!was_initialized) {
             uninitialize_for_crap_os();
