@@ -150,8 +150,9 @@ namespace manage_network {
         char addr_buff[basic_buffer_size];
 
         // Get the adapter information on each system
+        adapter_type the_adapters;
         #if defined(unix_os)
-            adapter_type adapters;
+            adapter_type the_adapters;
             if (getifaddrs(&adapters)) {
                 if (!was_initialized) {
                     uninitialize_for_crap_os();
@@ -163,42 +164,8 @@ namespace manage_network {
             }
 
             // getifaddrs should return 0 on success, so to get here, we have the adapter information, ideally
-            adapter_type this_adapter;
-            address_type this_address;
-            for (this_adapter = adapters; this_adapter; this_adapter = get_next_adapter(this_adapter)) {
-                for (this_address = this_adapter; this_address; this_address = get_next_address(this_address)) {
-                    if (get_address_family(this_address) == AF_INET || get_address_family(this_address) == AF_INET6) {
-                        adapt_name = get_adapter_name(this_adapter);
-                        ip_ver = (get_address_family(this_address) == AF_INET) ? ip4_const : ip6_const;
-                        memset(addr_buff, 0, basic_buffer_size);
-                        get_name_info(this_address, addr_buff, basic_buffer_size);
-                        ip_addr = std::string(addr_buff);
-
-                        if (the_answer.find(adapt_name) == the_answer.end()) {
-                            std::vector<std::string> new_list;
-                            new_list.push_back(ip_addr);
-                            std::map<std::string, std::vector<std::string> > new_map;
-                            new_map.insert(std::make_pair(ip_ver, new_list));
-                            the_answer.insert(std::make_pair(adapt_name, new_map));
-                            continue;
-                        }
-
-                        if (the_answer[adapt_name].find(ip_ver) == the_answer[adapt_name].end()) {
-                            std::vector<std::string> new_list;
-                            new_list.push_back(ip_addr);
-                            the_answer[adapt_name].insert(std::make_pair(ip_ver, new_list));
-                            continue;
-                        }
-
-                        the_answer[adapt_name][ip_ver].push_back(ip_addr);
-                    }
-                    break;
-                }
-            }
-            free_adapters(adapters);
         #else
             
-            adapter_type the_adapters;
             DWORD size = 20000;
 
             the_adapters = NULL;
@@ -207,7 +174,7 @@ namespace manage_network {
                 the_adapters = (adapter_type) malloc(size);
 
                 if (!the_adapters) {
-                    if (was_initialized) {
+                    if (!was_initialized) {
                         uninitialize_for_crap_os();
                     }
                     if (will_throw) {
@@ -231,7 +198,7 @@ namespace manage_network {
 
                 else {
                     std::free(the_adapters);
-                    if (was_initialized) {
+                    if (!was_initialized) {
                         uninitialize_for_crap_os();
                     }
                     if (will_throw) {
@@ -242,20 +209,19 @@ namespace manage_network {
                 }
             }
 
+        #endif
+
             adapter_type this_adapter;
             address_type this_address;
-            // std::printf("Reached 1\n");
             for (this_adapter = the_adapters; this_adapter; this_adapter = get_next_adapter(this_adapter)) {
-                // std::printf("Reached 2\n");
-                for (this_address = this_adapter->FirstUnicastAddress; this_address; this_address = get_next_address(this_address)) {
+                for (this_address = get_address(this_adapter); this_address; this_address = get_next_address(this_address)) {
                     if (get_address_family(this_address) == AF_INET || get_address_family(this_address) == AF_INET6) {
-                        // std::printf("Reached 3\n");
                         adapt_name = get_adapter_name(this_adapter);
                         ip_ver = (get_address_family(this_address) == AF_INET) ? ip4_const : ip6_const;
                         memset(addr_buff, 0, basic_buffer_size);
                         get_name_info(this_address, addr_buff, basic_buffer_size);
-                        // getnameinfo(this_address->Address.lpSockaddr, this_address->Address.lpSockaddrLength, addr_buff, basic_buffer_size, 0, 0, NI_NUMERICHOST);
                         ip_addr = std::string(addr_buff);
+
                         if (the_answer.find(adapt_name) == the_answer.end()) {
                             std::vector<std::string> new_list;
                             new_list.push_back(ip_addr);
@@ -274,14 +240,10 @@ namespace manage_network {
 
                         the_answer[adapt_name][ip_ver].push_back(ip_addr);
                     }
+                    break;
                 }
             }
-            // free(the_adapters);
-            // std::printf("Reached 4\n");
             free_adapters(the_adapters);
-            // std::printf("Reached 5\n");
-
-        #endif
 
         if (!was_initialized) {
             uninitialize_for_crap_os();

@@ -29,6 +29,7 @@
     #define get_socket_errno() (WSAGetLastError())
 
     #define get_next_adapter(this_adapter) (this_adapter->Next)
+    #define get_address(this_adapter) (this_adapter->FirstUnicastAddress)
     #define get_adapter_name(this_adapter) (useful_functions::ws2string(this_adapter->FriendlyName))
     #define get_next_address(this_address) (this_address->Next)
     #define get_address_family(this_address) (this_address->Address.lpSockaddr->sa_family)
@@ -100,6 +101,7 @@
     #define get_socket_errno() (errno)
 
     #define get_next_adapter(this_adapter) (this_adapter->ifa_next)
+    #define get_address(this_adapter) (this_adapter)
     #define get_adapter_name(this_adapter) (std::string(this_adapter->ifa_name))
     #define get_next_address(this_address) (NULL)
     #define get_address_family(this_address) (this_address->ifa_addr->sa_family)
