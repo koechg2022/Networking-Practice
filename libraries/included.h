@@ -238,7 +238,8 @@ namespace useful_functions {
                 the_answer = std::string(time_buff);
             }
             else {
-                the_answer = std::string(ctime(&this_time));
+                std::fprintf(stderr, "Error retrieving current time: %d\n", get_socket_errno());
+                std::exit(EXIT_FAILURE);
             }
         #else
             the_answer = std::string(ctime(&this_time));
