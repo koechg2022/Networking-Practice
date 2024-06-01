@@ -244,13 +244,14 @@ namespace manage_network {
 
             adapter_type this_adapter;
             address_type this_address;
-            for (this_adapter = the_adapters; this_adapter; this_adapter->Next) {
-                for (this_address = this_adapter->FirstUnicastAddress; this_address;this_address->Next) {
-                    if (this_address->Address.lpSockaddr->sa_family == AF_INET || this_address->Address.lpSockaddr->sa_family == AF_INET6) {
-                        adapt_name = useful_functions::ws2string(this_adapter->FriendlyName);
-                        ip_ver = (this_address->Address.lpSockaddr->sa_family == AF_INET) ? ip_4const : ip_6const;
+            for (this_adapter = the_adapters; this_adapter; get_next_adapter(this_adapter)) {
+                for (this_address = this_adapter->FirstUnicastAddress; this_address; get_next_address(this_address)) {
+                    if (get_address_family(this_address) == AF_INET || get_address_family(this_address) == AF_INET6) {
+                        adapt_name = get_adapter_name(this_adapter);
+                        ip_ver = (get_address_family(this_address) == AF_INET) ? ip_4const : ip_6const;
                         memset(addr_buff, 0, basic_buffer_size);
-                        getnameinfo(this_address->Address.lpSockaddr, this_address->Address.lpSockaddrLength, addr_buff, basic_buffer_size, 0, 0, NI_NUMERICHOST);
+                        get_name_info(this_address, addr_buff, basic_buffer_size);
+                        // getnameinfo(this_address->Address.lpSockaddr, this_address->Address.lpSockaddrLength, addr_buff, basic_buffer_size, 0, 0, NI_NUMERICHOST);
                         ip_ver = std::string(addr_buff);
 
                         if (the_answer.find(adapt_name) == the_answer.end()) {
@@ -273,7 +274,8 @@ namespace manage_network {
                     }
                 }
             }
-            free(the_adapters);
+            // free(the_adapters);
+            free_adapters(the_adapters);
 
         #endif
 
