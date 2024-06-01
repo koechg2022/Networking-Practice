@@ -231,7 +231,19 @@ namespace useful_functions {
     inline std::string get_current_time() {
         time_t this_time;
         time(&this_time);
-        std::string the_answer = std::string(ctime(&this_time));
+        std::string the_answer;
+        #if defined(crap_os)
+            char time_buff[basic_buffer_size];
+            if (ctime_s(time_buff, basic_buffer_size, &this_time)) {
+                the_answer = std::string(time_buff);
+            }
+            else {
+                the_answer = std::string(ctime(&this_time));
+            }
+        #else
+            the_answer = std::string(ctime(&this_time));
+        #endif
+
         return the_answer.substr(0, the_answer.length() - 1);
     }
 
