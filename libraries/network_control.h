@@ -120,48 +120,6 @@ namespace manage_network {
             #endif
         }
 
-<<<<<<< HEAD
-        int get_adapter_information(filling_adapter the_adapters) {
-            int the_answer;
-            #if defined(unix_os)
-                the_answer = getifaddrs(the_adapters);
-            #else
-                DWORD size = 20000;
-                do {
-                    
-                    the_adapters = (PIP_ADAPTER_ADDRESSES) malloc(size);
-                    if (!the_adapters) {
-                        std::fprintf(stderr, "This stupid windows machine won't share %ld bytes.\n", size);
-                        return -1;
-                    }
-
-                    int adapt_resp = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, 0, the_adapters, &size);
-
-                    if (adapt_resp == ERROR_BUFFER_OVERFLOW) {
-                        std::fprintf(stderr, "Gonna try again. This stupid windows adapter interface wants %ld bytes. Let's see if we can accomopdate it.\n", size);
-                        std::free(the_adapters);
-                        the_adapters = NULL;
-                    }
-
-                    else if (adapt_resp == ERROR_SUCCESS) {
-                        the_answer = 0;
-                        break;
-                    }
-
-                    else {
-                        std::fprintf(stderr, "Error while retrieving adapter information:\t(Error number %d):\n", get_socket_errno());
-                        std::free(the_adapters);
-                        the_answer = -1;
-                        the_adapters = NULL;
-                        break;
-                    }
-                } while (!the_adapters);
-            #endif
-            return the_answer;
-        }
-
-=======
->>>>>>> 296c10cf1ec27c0e37c977d9d7601616b773975f
     }
 
     // const std::map<std::string, std::map<std::string, std::vector<std::string> > > get_local_machine_adapters();
@@ -279,23 +237,25 @@ namespace manage_network {
                     if (will_throw) {
                         throw network_errors::network_error((char *) "Failed to retrieve this machine's adapters. I'm gonna go now");
                     }
-                    std::fprintf(stderr, "Ya, your crappy machine is windows. I don't like spending more time here than I have to, so I'm gonna leave. Here's the error number I encountered.\n", get_socket_errno());
+                    std::fprintf(stderr, "Ya, your crappy machine is windows. I don't like spending more time here than I have to, so I'm gonna leave. Here's the error number I encountered %d\n", get_socket_errno());
                     std::exit(EXIT_FAILURE);
                 }
             }
 
             adapter_type this_adapter;
             address_type this_address;
-            for (this_adapter = the_adapters; this_adapter; get_next_adapter(this_adapter)) {
-                for (this_address = this_adapter->FirstUnicastAddress; this_address; get_next_address(this_address)) {
+            // std::printf("Reached 1\n");
+            for (this_adapter = the_adapters; this_adapter; this_adapter = get_next_adapter(this_adapter)) {
+                // std::printf("Reached 2\n");
+                for (this_address = this_adapter->FirstUnicastAddress; this_address; this_address = get_next_address(this_address)) {
                     if (get_address_family(this_address) == AF_INET || get_address_family(this_address) == AF_INET6) {
+                        // std::printf("Reached 3\n");
                         adapt_name = get_adapter_name(this_adapter);
-                        ip_ver = (get_address_family(this_address) == AF_INET) ? ip_4const : ip_6const;
+                        ip_ver = (get_address_family(this_address) == AF_INET) ? ip4_const : ip6_const;
                         memset(addr_buff, 0, basic_buffer_size);
                         get_name_info(this_address, addr_buff, basic_buffer_size);
                         // getnameinfo(this_address->Address.lpSockaddr, this_address->Address.lpSockaddrLength, addr_buff, basic_buffer_size, 0, 0, NI_NUMERICHOST);
-                        ip_ver = std::string(addr_buff);
-
+                        ip_addr = std::string(addr_buff);
                         if (the_answer.find(adapt_name) == the_answer.end()) {
                             std::vector<std::string> new_list;
                             new_list.push_back(ip_addr);
@@ -317,7 +277,9 @@ namespace manage_network {
                 }
             }
             // free(the_adapters);
+            // std::printf("Reached 4\n");
             free_adapters(the_adapters);
+            // std::printf("Reached 5\n");
 
         #endif
 
