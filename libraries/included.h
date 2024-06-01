@@ -21,27 +21,12 @@
 
     #include <windows.h>
 
+    #define adapter_type PIP_ADAPTER_ADDRESS
+    #define address_type PIP_ADAPTER_UNICAST_ADDRESS
 
     #define valid_socket(sock_no) (sock_no != INVALID_SOCKET)
     #define close_socket(sock_no) (closesocket(sock_no))
     #define get_socket_errno() (WSAGetLastError())
-
-    // TODO : COMPLETE ME
-    // Needs to be complete.
-    #define get_adapter_name(this_adapter) (useful_functions::ws2string(this_adapter->FriendlyName))
-    #define get_next_adapter(this_adapter) (this_adapter->Next)
-    #define get_address(this_adapter) (this_adapter->FirstUnicastAddress)
-    #define get_next_address(this_address) (this_address->Next)
-    #define get_ip_version(this_address) (this_address->Address.lpSockaddr->sa_family)
-    #define fill_getnameinfo(this_address, address_buffer, buffer_size, flag) (getnameinfo(this_address->Address.lpSockaddr, this_address->Address.iSockaddrLength, address_buffer, buffer_size, 0, 0, flag))
-    #define free_adapters(the_adapters)(free(the_adapters))
-    #define pass_adapters_to_filling_info(this_adapter) (this_adapter)
-
-
-    typedef SOCKET sock;
-    typedef PIP_ADAPTER_UNICAST_ADDRESS address;
-    typedef PIP_ADAPTER_ADDRESSES adapter;
-    typedef PIP_ADAPTER_ADDRESSES filling_adapter;
 
 
 
@@ -100,26 +85,19 @@
 
     
 
+    #define adapter_type struct ifaddrs*
+    #define address_type struct ifaddrs*
+
     #define valid_socket(sock_no) (sock_no >= 0)
     #define close_socket(sock_no) (close(sock_no))
     #define get_socket_errno() (errno)
 
-
-
-    #define get_adapter_name(this_adapter) (std::string(this_adapter->ifa_name))
     #define get_next_adapter(this_adapter) (this_adapter->ifa_next)
-    #define get_address(an_adapter) (an_adapter)
     #define get_next_address(this_address) (NULL)
-    #define get_ip_version(this_address) (this_address->ifa_addr->sa_family)
-    #define fill_getnameinfo(this_address, address_buffer, buffer_size, flag) (getnameinfo(this_address->ifa_addr, (this_address->ifa_addr->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6), address_buffer, buffer_size, 0, 0, flag))
-    #define free_adapters(the_adapters)(freeifaddrs(the_adapters))
-    #define pass_adapters_to_filling_info(this_adapter) (&this_adapter)
-
-
-    typedef int sock;
-    typedef struct ifaddrs* address;
-    typedef struct ifaddrs* adapter;
-    typedef struct ifaddrs** filling_adapter;
+    #define get_address_family(this_address) (this_address->ifa_addr->sa_family)
+    #define get_adapter_name(this_adapter) (std::string(this_adapter->ifa_name))
+    #define get_name_info(this_address, buff, buff_size) (getnameinfo(this_address->ifa_addr, (get_address_family(this_address) == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6), buff, buff_size, 0, 0, NI_NUMERICHOST))
+    #define free_adapters(the_adapters) (freeifaddrs(the_adapters))
 
 #endif
 
@@ -248,35 +226,33 @@ namespace useful_functions {
         return the_answer.substr(0, the_answer.length() - 1);
     }
 
-    #if defined(crap_os)
-        std::string ws2string(const std::wstring& wstr) {
-            std::string the_answer;
-            the_answer.reserve(wstr.size());
+    std::string ws2string(const std::wstring& wstr) {
+        std::string the_answer;
+        the_answer.reserve(wstr.size());
 
-            for (wchar_t wc : wstr) {
-                if (wc <= 0x7f) {
-                    the_answer.push_back(static_cast<char>(wc));
-                }
-                else if (wc <= 0x7ff) {
-                    the_answer.push_back(0xc0 | (wc >> 6));
-                    the_answer.push_back(0x80 | (wc & 0x3f));
-                }
-                else if (wc <= 0xffff) {
-                    the_answer.push_back(0xe0 | (wc >> 12));
-                    the_answer.push_back(0x80 | ((wc >> 6) & 0x3f));
-                    the_answer.push_back(0x80 | (wc & 0x3f));
-                }
-                else if (wc <= 0x10ffff) {
-                    the_answer.push_back(0xf0 | (wc >> 18));
-                    the_answer.push_back(0x80 | ((wc >> 12) & 0x3f));
-                    the_answer.push_back(0x80 | ((wc >> 6) & 0x3f));
-                    the_answer.push_back(0x80 | (wc & 0x3f));
-                }
+        for (wchar_t wc : wstr) {
+            if (wc <= 0x7f) {
+                the_answer.push_back(static_cast<char>(wc));
             }
-
-            return the_answer;
+            else if (wc <= 0x7ff) {
+                the_answer.push_back(0xc0 | (wc >> 6));
+                the_answer.push_back(0x80 | (wc & 0x3f));
+            }
+            else if (wc <= 0xffff) {
+                the_answer.push_back(0xe0 | (wc >> 12));
+                the_answer.push_back(0x80 | ((wc >> 6) & 0x3f));
+                the_answer.push_back(0x80 | (wc & 0x3f));
+            }
+            else if (wc <= 0x10ffff) {
+                the_answer.push_back(0xf0 | (wc >> 18));
+                the_answer.push_back(0x80 | ((wc >> 12) & 0x3f));
+                the_answer.push_back(0x80 | ((wc >> 6) & 0x3f));
+                the_answer.push_back(0x80 | (wc & 0x3f));
+            }
         }
-    #endif
+
+        return the_answer;
+    }
 
 
     inline int get_terminal_window_width() {
