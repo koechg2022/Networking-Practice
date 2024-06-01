@@ -265,11 +265,11 @@ namespace useful_functions {
                 the_answer.push_back(0x80 | ((wc >> 6) & 0x3f));
                 the_answer.push_back(0x80 | (wc & 0x3f));
             }
-            #if defined(crap_os)
-                else {
-            #else
-                else if (wc <= 0x10ffff) {
-            #endif
+        #if defined(crap_os)
+            else {
+        #else
+            else if (wc <= 0x10ffff) {
+        #endif
                 the_answer.push_back(0xf0 | (wc >> 18));
                 the_answer.push_back(0x80 | ((wc >> 12) & 0x3f));
                 the_answer.push_back(0x80 | ((wc >> 6) & 0x3f));
