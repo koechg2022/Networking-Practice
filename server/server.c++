@@ -23,23 +23,31 @@ int main(int len, char** args) {
         std::cerr << "Usage : " << args[0] << " <hostname> < None || port >" << std::endl;
         std::exit(EXIT_FAILURE);
     }
-    int index;
+    int index, extra;
+    print_line_across_window('*');
+    std::printf("print_across_line finished\n");
     for (index = 1; index < len; index = index + 1) {
         if (useful_functions::same_string(args[index], (char *) "list addresses") || useful_functions::same_string(args[index], (char *) "la")) {
             list_adapters();;
+            print_line_across_window('*');
         }
-        if (useful_functions::same_string(args[1], (char *) "do the thing") || useful_functions::same_string(args[1], (char *) "dtt")) {
-            if (len <= index + 1) {
+        if (useful_functions::same_string(args[index], (char *) "do the thing") || useful_functions::same_string(args[index], (char *) "dtt")) {
+            extra = 0;
+            std::printf("Inside do the thing branch\n");
+            if (index + 1 >= len) {
                 std::cerr << "Usage " << args[index] << " <dtt> <port = Defaults to 8080, but you can pass in a parameter>" << std::endl;
                 continue;
             }
             char* the_port = (char*) "8080";
             if (index + 2 < len && useful_functions::all_nums(args[index + 2])) {
                 the_port = args[index + 2];
+                extra = 1;
             }
             do_the_thing(args[index + 1], the_port);
+            index = index + extra;
+            extra = 0;
+            print_line_across_window('*');
         }
-        print_line_across_window('*');
     }
 
     return 0;
