@@ -20,7 +20,7 @@ void list_adapters();
 int main(int len, char** args) {
 
     if (len == 1) {
-        std::cerr << "Usage : " << args[0] << " <hostname> <None | port>" << std::endl;
+        std::cerr << "Usage : " << args[0] << " <hostname> < None || port >" << std::endl;
         std::exit(EXIT_FAILURE);
     }
     int index;

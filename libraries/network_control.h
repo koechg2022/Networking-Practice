@@ -120,6 +120,7 @@ namespace manage_network {
             #endif
         }
 
+<<<<<<< HEAD
         int get_adapter_information(filling_adapter the_adapters) {
             int the_answer;
             #if defined(unix_os)
@@ -159,6 +160,8 @@ namespace manage_network {
             return the_answer;
         }
 
+=======
+>>>>>>> 296c10cf1ec27c0e37c977d9d7601616b773975f
     }
 
     // const std::map<std::string, std::map<std::string, std::vector<std::string> > > get_local_machine_adapters();
@@ -185,59 +188,138 @@ namespace manage_network {
             was_initialized = true;
         }
 
+        std::string adapt_name, ip_ver, ip_addr;
+        char addr_buff[basic_buffer_size];
 
-        adapter the_adapters;
-
-        if (get_adapter_information(pass_adapters_to_filling_info(the_adapters)) == -1) {
-            std::fprintf(stderr, "Failed to retrieve adapter information for this machine. Error %d\n", get_socket_errno());
-            if (will_throw) {
+        // Get the adapter information on each system
+        #if defined(unix_os)
+            adapter_type adapters;
+            if (getifaddrs(&adapters)) {
                 if (!was_initialized) {
                     uninitialize_for_crap_os();
                 }
-                throw network_errors::network_error((char *) "An error has occured. Could not retrieve adapter information. Network error %d\n");
+                if (will_throw) {
+                    throw network_errors::network_error((char *) "Could not retrieve machine's network adapter information");
+                }
+                std::exit(EXIT_FAILURE);
             }
-            else {
-                if (!was_initialized) {
-                    uninitialize_for_crap_os();
+
+            // getifaddrs should return 0 on success, so to get here, we have the adapter information, ideally
+            adapter_type this_adapter;
+            address_type this_address;
+            for (this_adapter = adapters; this_adapter; this_adapter = get_next_adapter(this_adapter)) {
+                for (this_address = this_adapter; this_address; this_address = get_next_address(this_address)) {
+                    if (get_address_family(this_address) == AF_INET || get_address_family(this_address) == AF_INET6) {
+                        adapt_name = get_adapter_name(this_adapter);
+                        ip_ver = (get_address_family(this_address) == AF_INET) ? ip4_const : ip6_const;
+                        memset(addr_buff, 0, basic_buffer_size);
+                        get_name_info(this_address, addr_buff, basic_buffer_size);
+                        ip_addr = std::string(addr_buff);
+
+                        if (the_answer.find(adapt_name) == the_answer.end()) {
+                            std::vector<std::string> new_list;
+                            new_list.push_back(ip_addr);
+                            std::map<std::string, std::vector<std::string> > new_map;
+                            new_map.insert(std::make_pair(ip_ver, new_list));
+                            the_answer.insert(std::make_pair(adapt_name, new_map));
+                            continue;
+                        }
+
+                        if (the_answer[adapt_name].find(ip_ver) == the_answer[adapt_name].end()) {
+                            std::vector<std::string> new_list;
+                            new_list.push_back(ip_addr);
+                            the_answer[adapt_name].insert(std::make_pair(ip_ver, new_list));
+                            continue;
+                        }
+
+                        the_answer[adapt_name][ip_ver].push_back(ip_addr);
+                    }
+                    break;
                 }
             }
-            std::exit(EXIT_FAILURE);
-        }
+            free_adapters(adapters);
+        #else
+            
+            adapter_type the_adapters;
+            DWORD size = 20000;
 
-        char address_string[basic_buffer_size];
-        std::string adapter_name, ip_version, ip_address;
+            the_adapters = NULL;
 
-        for (adapter this_adapter = the_adapters; this_adapter; this_adapter = get_next_adapter(this_adapter)) {
-            adapter_name = get_adapter_name(this_adapter);
-            for (address this_address = get_address(this_adapter); this_address; this_address = get_next_address(this_address)) {
-                if (get_ip_version(this_address) == AF_INET || get_ip_version(this_address) == AF_INET6) {
-                    ip_version = (get_ip_version(this_address) == AF_INET) ? ip4_const : ip6_const;
-                    fill_getnameinfo(this_address, address_string, basic_buffer_size, NI_NUMERICHOST);
-                    ip_address = std::string(address_string);
+            while (!the_adapters) {
+                the_adapters = (adapter_type) malloc(size);
 
-                    if (the_answer.find(adapter_name) == the_answer.end()) {
-                        std::map<std::string, std::vector<std::string> > new_dict;
-                        std::vector<std::string> new_list;
-                        new_list.push_back(ip_address);
-                        new_dict.insert(std::make_pair(ip_version, new_list));
-                        the_answer.insert(std::make_pair(adapter_name, new_dict));
-                        continue;
+                if (!the_adapters) {
+                    if (was_initialized) {
+                        uninitialize_for_crap_os();
                     }
-
-                    if (the_answer[adapter_name].find(ip_version) == the_answer[adapter_name].end()) {
-                        // the_answer has adapter_name, but adapter_name does not have ip_version
-                        std::vector<std::string> new_list;
-                        new_list.push_back(ip_address);
-                        the_answer[adapter_name].insert(std::make_pair(ip_version, new_list));
-                        continue;
+                    if (will_throw) {
+                        throw network_errors::memory_error((char *) "Could not retrieve necessary memory for the adapters. God windows sucks and I can't believe I have to accomopdate this Crap OS.\n");
                     }
+                    std::fprintf(stderr, "Failed to get the necessary memory for the adapters. God windows sucks and I can't believe I have to accomopdate this Crap OS.\n");
+                    std::exit(EXIT_FAILURE);
+                }
 
-                    the_answer[adapter_name][ip_version].push_back(ip_address);
+                int adapt_resp = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, 0, the_adapters, &size);
 
+                if (adapt_resp == ERROR_BUFFER_OVERFLOW) {
+                    std::printf("Your crappy windows machine needs %ld bytes to give me the adapters of interest. I'm gonna try again to get those bytes.\n", size);
+                    std::free(the_adapters);
+                    the_adapters = NULL;
+                }
+
+                else if (adapt_resp == ERROR_SUCCESS) {
+                    break;
+                }
+
+                else {
+                    std::free(the_adapters);
+                    if (was_initialized) {
+                        uninitialize_for_crap_os();
+                    }
+                    if (will_throw) {
+                        throw network_errors::network_error((char *) "Failed to retrieve this machine's adapters. I'm gonna go now");
+                    }
+                    std::fprintf(stderr, "Ya, your crappy machine is windows. I don't like spending more time here than I have to, so I'm gonna leave. Here's the error number I encountered.\n", get_socket_errno());
+                    std::exit(EXIT_FAILURE);
                 }
             }
-        }
-        free_adapters(the_adapters);
+
+            adapter_type this_adapter;
+            address_type this_address;
+            for (this_adapter = the_adapters; this_adapter; get_next_adapter(this_adapter)) {
+                for (this_address = this_adapter->FirstUnicastAddress; this_address; get_next_address(this_address)) {
+                    if (get_address_family(this_address) == AF_INET || get_address_family(this_address) == AF_INET6) {
+                        adapt_name = get_adapter_name(this_adapter);
+                        ip_ver = (get_address_family(this_address) == AF_INET) ? ip_4const : ip_6const;
+                        memset(addr_buff, 0, basic_buffer_size);
+                        get_name_info(this_address, addr_buff, basic_buffer_size);
+                        // getnameinfo(this_address->Address.lpSockaddr, this_address->Address.lpSockaddrLength, addr_buff, basic_buffer_size, 0, 0, NI_NUMERICHOST);
+                        ip_ver = std::string(addr_buff);
+
+                        if (the_answer.find(adapt_name) == the_answer.end()) {
+                            std::vector<std::string> new_list;
+                            new_list.push_back(ip_addr);
+                            std::map<std::string, std::vector<std::string> > new_map;
+                            new_map.insert(std::make_pair(ip_ver, new_list));
+                            the_answer.insert(std::make_pair(adapt_name, new_map));
+                            continue;
+                        }
+
+                        if (the_answer[adapt_name].find(ip_ver) == the_answer[adapt_name].end()) {
+                            std::vector<std::string> new_list;
+                            new_list.push_back(ip_addr);
+                            the_answer[adapt_name].insert(std::make_pair(ip_ver, new_list));
+                            continue;
+                        }
+
+                        the_answer[adapt_name][ip_ver].push_back(ip_addr);
+                    }
+                }
+            }
+            // free(the_adapters);
+            free_adapters(the_adapters);
+
+        #endif
 
         if (!was_initialized) {
             uninitialize_for_crap_os();
