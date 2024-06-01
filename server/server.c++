@@ -9,8 +9,7 @@
 void print_line_across_window(char c);
 
 
-void do_the_thing(char* host, char* port);
-
+void do_the_thing(char* port);
 
 
 void list_adapters();
@@ -20,7 +19,7 @@ void list_adapters();
 int main(int len, char** args) {
 
     if (len == 1) {
-        std::cerr << "Usage : " << args[0] << " <hostname> < None || port >" << std::endl;
+        std::cerr << "Usage : " << args[0] << " < la || list addresses > || < None || port >" << std::endl;
         std::exit(EXIT_FAILURE);
     }
     int index, extra;
@@ -33,17 +32,12 @@ int main(int len, char** args) {
         }
         if (useful_functions::same_string(args[index], (char *) "do the thing") || useful_functions::same_string(args[index], (char *) "dtt")) {
             extra = 0;
-            std::printf("Inside do the thing branch\n");
-            if (index + 1 >= len) {
-                std::cerr << "Usage " << args[index] << " <dtt> <port = Defaults to 8080, but you can pass in a parameter>" << std::endl;
-                continue;
-            }
+            
             char* the_port = (char*) "8080";
-            if (index + 2 < len && useful_functions::all_nums(args[index + 2])) {
-                the_port = args[index + 2];
-                extra = 1;
+            if (index + 1 < len && useful_functions::all_nums(args[index + 1])) {
+                the_port = args[index + 1];
             }
-            do_the_thing(args[index + 1], the_port);
+            do_the_thing(the_port);
             index = index + extra;
             extra = 0;
             print_line_across_window('*');
@@ -85,6 +79,7 @@ void list_adapters() {
 
 
 
-void do_the_thing(char* host, char* port){
-    std::cerr << "Accepted parameters hostname <" << host << "> and port <" << port << "> But do_the_thing is still under construction" << std::endl;
+void do_the_thing(char* port){
+    // std::cerr << "Accepted parameters hostname <" << host << "> and port <" << port << "> But do_the_thing is still under construction" << std::endl;
+    manage_network::single_server_run(port);
 }

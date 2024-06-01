@@ -27,6 +27,7 @@
     #define valid_socket(sock_no) (sock_no != INVALID_SOCKET)
     #define close_socket(sock_no) (closesocket(sock_no))
     #define get_socket_errno() (WSAGetLastError())
+    #define get_socket_errno_string(error_num) ((char *) "An error has occured and I'm a stupid windows sysem so I can't really tell you much about it...")
 
     #define get_next_adapter(this_adapter) (this_adapter->Next)
     #define get_address(this_adapter) (this_adapter->FirstUnicastAddress)
@@ -35,6 +36,9 @@
     #define get_address_family(this_address) (this_address->Address.lpSockaddr->sa_family)
     #define get_name_info(this_address, buff, buff_size) (getnameinfo(this_address->Address.lpSockaddr, this_address->Address.iSockaddrLength, buff, buff_size, 0, 0, NI_NUMERICHOST))
     #define free_adapters(the_adapters) (free(the_adapters));
+
+    #define sock_type SOCKET
+    #define invalid_socket INVLAID_SOCKET
 
 
 
@@ -99,6 +103,7 @@
     #define valid_socket(sock_no) (sock_no >= 0)
     #define close_socket(sock_no) (close(sock_no))
     #define get_socket_errno() (errno)
+    #define get_socket_errno_string(error_num) (gai_strerror(error_num))
 
     #define get_next_adapter(this_adapter) (this_adapter->ifa_next)
     #define get_address(this_adapter) (this_adapter)
@@ -107,6 +112,9 @@
     #define get_address_family(this_address) (this_address->ifa_addr->sa_family)
     #define get_name_info(this_address, buff, buff_size) (getnameinfo(this_address->ifa_addr, (get_address_family(this_address) == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6), buff, buff_size, 0, 0, NI_NUMERICHOST))
     #define free_adapters(the_adapters) (freeifaddrs(the_adapters))
+
+    #define sock_type int
+    #define invalid_socket -1
 
 #endif
 

@@ -1,5 +1,8 @@
 
 
+
+
+
 #if not defined(_INCLUDED_LIBS)
     #include "included.h"
 #endif
@@ -423,6 +426,126 @@ namespace manage_network {
         }
 
         return the_answer;
+    }
+
+
+    void single_server_run(const char* port_no, int listen_count = 10) {
+        bool was_init = false;
+        if (is_initialized()) {
+            was_init = true;
+        }
+
+        struct addrinfo* this_machine, init_vals;
+        memset(&init_vals, 0, sizeof(init_vals));
+        init_vals.ai_family = AF_UNSPEC;
+        init_vals.ai_socktype = SOCK_STREAM;
+        init_vals.ai_flags = AI_PASSIVE;
+
+
+        if (getaddrinfo(0, port_no, &init_vals, &this_machine)) {
+            if (!was_init) {
+                uninitialize_for_crap_os();
+            }
+            if (will_throw) {
+                throw network_errors::network_error((char *) ("Erorr retrieving adapter information for binding adapter address. Error (" + std::to_string(get_socket_errno()) + ") " + "\t(" + std::string(get_socket_errno_string(get_socket_errno())) + ")").c_str());
+            }
+            std::fprintf(stderr, "Error retrieving adapter information for a binding adapter address. Error %d, (%s)\n", get_socket_errno(), get_socket_errno_string(get_socket_errno()));
+            std::exit(EXIT_FAILURE);
+        }
+
+        sock_type listening_socket = socket(this_machine->ai_family, this_machine->ai_socktype, this_machine->ai_protocol);
+        if (!valid_socket(listening_socket)) {
+            if (!was_init) {
+                uninitialize_for_crap_os();
+            }
+            if (will_throw) {
+                throw network_errors::network_error((char *) ("Erorr creating listening socket. Error (" + std::to_string(get_socket_errno()) + ") " + "\t(" + std::string(get_socket_errno_string(get_socket_errno())) + ")").c_str());
+            }
+            std::fprintf(stderr, "Error creating listening socket. Error %d, (%s)\n", get_socket_errno(), get_socket_errno_string(get_socket_errno()));
+            std::exit(EXIT_FAILURE);
+        }
+
+        if (bind(listening_socket, this_machine->ai_addr, this_machine->ai_addrlen)) {
+            if (!was_init) {
+                uninitialize_for_crap_os();
+            }
+            if (will_throw) {
+                throw network_errors::network_error((char *) ("Error error binding the listening socket. Error " + std::to_string(get_socket_errno()) + ", (" + std::string(get_socket_errno_string(get_socket_errno())) + ")").c_str());
+            }
+            std::fprintf(stderr, "Error binding the listening socket. Error %d, (%s)\n", get_socket_errno(), get_socket_errno_string(get_socket_errno()));
+            std::exit(EXIT_FAILURE);
+        }
+
+        // socket is bound.
+
+        if (listen(listening_socket, listen_count)) {
+            if (!was_init) {
+                uninitialize_for_crap_os();
+            }
+            if (will_throw) {
+                throw network_errors::network_error((char *) ("Error setting the listening socket to start listening. Error " + std::to_string(get_socket_errno()) + ", (" + std::string(get_socket_errno_string(get_socket_errno())) + ")").c_str());
+            }
+            std::fprintf(stderr, "Error setting the listening socket to start listening. Error %d, (%s)\n", get_socket_errno(), get_socket_errno_string(get_socket_errno()));
+            std::exit(EXIT_FAILURE);
+        }
+
+        struct sockaddr_storage client_info;
+        socklen_t client_size = sizeof(client_info);
+
+        sock_type client_socket = accept(listening_socket, (struct sockaddr*) &client_info, &client_size);
+
+        if (!valid_socket(client_socket)) {
+            if (!was_init) {
+                uninitialize_for_crap_os();
+            }
+            if (will_throw) {
+                throw network_errors::network_error((char *) ("Error setting the new client's socket. Error " + std::to_string(get_socket_errno()) + ", (" + get_socket_errno_string(get_socket_errno()) + ")").c_str());
+            }
+            std::fprintf(stderr, "Error setting the new client's socket. Error %d, (%s)\n", get_socket_errno(), get_socket_errno_string(get_socket_errno()));
+            std::exit(EXIT_FAILURE);
+        }
+
+        char address_buff[basic_buffer_size];
+        char service_buff[basic_buffer_size];
+        getnameinfo((struct sockaddr*) &client_info, client_size, address_buff, basic_buffer_size, service_buff, basic_buffer_size, NI_MAXHOST | NI_MAXSERV);
+
+        std::printf("Connection from %s\n\tService %s\n", address_buff, service_buff);
+
+        char request[kilo_byte];
+        int bytes_received, bytes_sent;
+        std::string from_client = "";
+        unsigned long received_total = 0, total_sent;
+        received_total = recv(client_socket, request, kilo_byte, 0);
+        from_client = std::string(request, received_total);
+        std::printf("Received %lu bytes from the client: \"%s\"\n", received_total, from_client.c_str());
+
+
+        // Sending response....
+        const char* response_head = "HTTP/1.1 200 OK\r\n" "Connection: close\r\n" "Content-Type: text/plain\r\n\r\n" "Local time is: ";
+        total_sent = send(client_socket, response_head, useful_functions::string_length(response_head), 0);
+        std::string to_send = useful_functions::get_current_time() + "\n\n\n";
+        total_sent = total_sent + send(client_socket, to_send.c_str(), to_send.length(), 0);
+
+        std::printf("Opening file to read data to the client.\n");
+        std::FILE* html_file = std::fopen("files/quelques-femmes.html", "r");
+        if (!html_file) {
+            // do something else
+            to_send = "Could not open quelques-femmes.html file to send it's data over";
+            total_sent = total_sent + send(client_socket, to_send.c_str(), to_send.length(), 0);
+        }
+        else {
+            while ((bytes_sent = fread(request, sizeof(char), kilo_byte, html_file)) > 0) {
+                total_sent = total_sent + send(client_socket, request, bytes_sent, 0);
+            }
+            std::fclose(html_file);
+        }
+
+        std::printf("Sent a total of %lu bytes...\n", total_sent);
+        close_socket(client_socket);
+        close_socket(listening_socket);
+        if (!was_init) {
+            uninitialize_for_crap_os();
+        }
     }
 
 
