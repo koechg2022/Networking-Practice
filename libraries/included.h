@@ -165,6 +165,10 @@
     #include <string.h>
 #endif
 
+#if defined(crap_os) && not defined(_STRING_)
+    #include <string>
+#endif
+
 
 
 
