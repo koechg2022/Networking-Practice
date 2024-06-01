@@ -166,11 +166,11 @@ namespace manage_network {
             // getifaddrs should return 0 on success, so to get here, we have the adapter information, ideally
         #else
             
-            DWORD size = 20000;
 
             the_adapters = NULL;
 
             while (!the_adapters) {
+                DWORD size = 20000;
                 the_adapters = (adapter_type) malloc(size);
 
                 if (!the_adapters) {
