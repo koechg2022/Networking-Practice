@@ -173,36 +173,71 @@
 
 namespace useful_functions {
 
-    inline bool is_caps(const char c) {
+    /*
+    * @brief Check if the char passed in is a capital letter or not.
+    */
+    bool is_caps(const char c);
+
+
+    /*
+    * @brief Check if the char passed in is a lower case letter or not.
+    */
+    bool is_lower(const char c);
+
+    bool is_letter(const char c);
+
+    bool is_number (const char c);
+
+    char to_caps(const char c);
+
+    char to_lower(const char c);
+
+    bool same_char(const char a, const char b, bool ignore_case = true);
+
+    bool same_string(const char* first, const char* second, bool ignore_case = true);
+
+    unsigned long string_length(const char* the_string);
+
+    bool all_nums(const char* the_string);
+
+    std::string get_current_time();
+
+    std::string ws2string(const std::wstring& wstr);
+
+    int get_terminal_window_width();
+
+
+    bool is_caps(const char c) {
         return c >= 'A' && c<= 'Z';
     }
 
 
-    inline bool is_lower(const char c) {
+    bool is_lower(const char c) {
         return c >= 'a' && c <= 'z';
     }
 
-    inline bool is_letter(const char c) {
+
+    bool is_letter(const char c) {
         return is_caps(c) || is_lower(c);
     }
 
-    inline bool is_number (const char c) {
+    bool is_number (const char c) {
         return c >= '0' && c <= '9';
     }
 
-    inline char to_caps(const char c) {
+    char to_caps(const char c) {
         return (is_lower(c)) ? (c - ('a' - 'A')) : c;
     }
 
-    inline char to_lower(const char c) {
+    char to_lower(const char c) {
         return (is_caps(c)) ? (c + ('a' - 'A')) : c;
     }
 
-    inline bool same_char(const char a, const char b, bool ignore_case = true) {
+    bool same_char(const char a, const char b, bool ignore_case) {
         return (ignore_case) ? to_caps(a) == to_caps(b) : a == b;
     }
 
-    inline bool same_string(const char* first, const char* second, bool ignore_case = true) {
+    bool same_string(const char* first, const char* second, bool ignore_case) {
         unsigned long index;
         for (index = 0; first[index] != '0' && second[index] != '\0'; index = index + 1) {
             if (!same_char(first[index], second[index], ignore_case)) {
@@ -212,13 +247,13 @@ namespace useful_functions {
         return (first[index] == '\0' && second[index] == '\0');
     }
 
-    inline unsigned long string_length(const char* the_string) {
+    unsigned long string_length(const char* the_string) {
         unsigned long the_answer;
         for (the_answer = 0; the_string[the_answer] != '\0'; the_answer = the_answer + 1);
         return the_answer;
     }
     
-    inline bool all_nums(const char* the_string) {
+    bool all_nums(const char* the_string) {
         unsigned long index;
         for (index = 0; the_string[index] != '\0'; index = index + 1) {
             if (!is_number(the_string[index])) {
@@ -228,7 +263,7 @@ namespace useful_functions {
         return true;
     }
 
-    inline std::string get_current_time() {
+    std::string get_current_time() {
         time_t this_time;
         time(&this_time);
         std::string the_answer;
@@ -281,7 +316,7 @@ namespace useful_functions {
     }
 
 
-    inline int get_terminal_window_width() {
+    int get_terminal_window_width() {
         int the_answer;
         #if defined (crap_os)
             CONSOLE_SCREEN_BUFFER_INFO csbi;
